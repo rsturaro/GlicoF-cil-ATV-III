@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16365F">
+<title>GlicoFácil</title>
+<style>
+  :root {
+    --azul-escuro:#16365F; --azul:#1F497D; --azul-claro:#E8EEF7;
+    --verde:#1E7B34; --verde-claro:#E6F4EA;
+    --amarelo:#9A6700; --amarelo-claro:#FFF4D6;
+    --vermelho:#B42318; --vermelho-claro:#FDECEA;
+    --texto:#1B2533; --texto-suave:#5B6676; --fundo:#F2F5FA; --cartao:#FFFFFF;
+    --raio:20px; --sombra:0 4px 18px rgba(22,54,95,.08);
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; font-family:"Segoe UI", Roboto, Arial, sans-serif; background:var(--fundo); color:var(--texto); font-size:20px; line-height:1.4; }
+  button, select, input { font-family:inherit; }
+
+  /* Cabeçalho */
+  header { background:linear-gradient(135deg, var(--azul-escuro), var(--azul)); color:#fff; padding:22px 22px 70px; border-radius:0 0 28px 28px; }
+  .marca { display:flex; align-items:center; gap:10px; font-weight:700; font-size:22px; letter-spacing:.3px; }
+  .marca svg { width:30px; height:30px; }
+  .saudacao { margin-top:18px; font-size:26px; font-weight:700; }
+  .subtitulo { opacity:.85; font-size:18px; margin-top:2px; }
+
+  main { position:relative; z-index:1; padding:0 18px 28px; max-width:480px; margin:-50px auto 0; }
+  .tela { display:none; animation:entra .25s ease; } .tela.ativa { display:block; }
+  @keyframes entra { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+  .cartao { background:var(--cartao); border-radius:var(--raio); padding:20px; margin-bottom:16px; box-shadow:var(--sombra); }
+  .rotulo { font-size:15px; font-weight:600; text-transform:uppercase; letter-spacing:.6px; color:var(--texto-suave); margin-bottom:6px; }
+
+  /* Status do sensor */
+  .status { display:flex; align-items:center; gap:12px; font-size:17px; color:var(--texto-suave); }
+  .ponto { width:12px; height:12px; border-radius:50%; background:#B0B8C4; box-shadow:0 0 0 4px #EEF1F5; flex:none; }
+  .ponto.on { background:var(--verde); box-shadow:0 0 0 4px var(--verde-claro); }
+
+  /* Último exame */
+  .ultimo { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .ultimo .num { font-size:44px; font-weight:800; color:var(--azul-escuro); line-height:1; }
+  .ultimo .num small { font-size:16px; font-weight:600; color:var(--texto-suave); margin-left:4px; }
+  .selo { display:inline-block; padding:6px 14px; border-radius:999px; font-size:16px; font-weight:700; }
+  .selo.normal{background:var(--verde-claro);color:var(--verde);} .selo.atencao{background:var(--amarelo-claro);color:var(--amarelo);}
+  .selo.alto,.selo.baixo{background:var(--vermelho-claro);color:var(--vermelho);}
+
+  /* Botões */
+  .btn { display:flex; align-items:center; justify-content:center; gap:12px; width:100%; min-height:68px; padding:18px; font-size:22px; font-weight:700; border:0; border-radius:18px; margin-bottom:14px; cursor:pointer; transition:transform .1s; }
+  .btn:active { transform:scale(.98); }
+  .btn svg { width:28px; height:28px; flex:none; }
+  .primario { background:var(--azul); color:#fff; box-shadow:0 6px 16px rgba(31,73,125,.3); }
+  .secundario { background:var(--azul-claro); color:var(--azul); }
+  .zap { background:var(--verde); color:#fff; box-shadow:0 6px 16px rgba(30,123,52,.28); }
+
+  /* Passos do exame */
+  .passos { list-style:none; margin:0; padding:0; }
+  .passos li { display:flex; gap:14px; align-items:flex-start; padding:10px 0; font-size:19px; }
+  .passos .n { flex:none; width:34px; height:34px; border-radius:50%; background:var(--azul); color:#fff; font-weight:700; display:grid; place-items:center; font-size:17px; }
+
+  /* Escolha jejum / pós */
+  .opcoes { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .opcao { border:2px solid #D5DDE8; background:#fff; border-radius:16px; padding:14px 10px; text-align:center; font-size:18px; font-weight:600; color:var(--texto); cursor:pointer; }
+  .opcao span { display:block; font-size:28px; margin-bottom:4px; }
+  .opcao.sel { border-color:var(--azul); background:var(--azul-claro); color:var(--azul-escuro); }
+  label { font-size:17px; font-weight:600; display:block; margin:0 0 8px; color:var(--texto-suave); }
+  input { width:100%; font-size:28px; font-weight:700; padding:14px 16px; border-radius:14px; border:2px solid #D5DDE8; color:var(--azul-escuro); }
+  input:focus { outline:none; border-color:var(--azul); }
+
+  /* Resultado */
+  .medidor { position:relative; width:220px; height:220px; margin:4px auto 10px; }
+  .medidor svg { width:100%; height:100%; transform:rotate(-90deg); }
+  .medidor .centro { position:absolute; inset:0; display:grid; place-content:center; text-align:center; }
+  .medidor .valor { font-size:62px; font-weight:800; line-height:1; color:var(--azul-escuro); }
+  .medidor .unid { font-size:17px; color:var(--texto-suave); font-weight:600; }
+  .faixa { text-align:center; font-size:24px; font-weight:800; padding:12px; border-radius:14px; }
+  .faixa.normal{background:var(--verde-claro);color:var(--verde);} .faixa.atencao{background:var(--amarelo-claro);color:var(--amarelo);}
+  .faixa.alto,.faixa.baixo{background:var(--vermelho-claro);color:var(--vermelho);}
+  .data { text-align:center; font-size:16px; color:var(--texto-suave); }
+  .dica { display:flex; gap:14px; align-items:flex-start; font-size:19px; }
+  .dica svg { width:30px; height:30px; flex:none; color:var(--azul); }
+  .aviso { font-size:15px; color:var(--texto-suave); text-align:center; margin-top:4px; }
+
+  /* Histórico */
+  .linha { display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid #EEF1F5; }
+  .linha:last-child { border-bottom:0; }
+  .linha .quando { font-size:18px; } .linha .quando small { display:block; font-size:15px; color:var(--texto-suave); }
+  .linha .v { font-size:22px; font-weight:800; display:flex; align-items:center; gap:10px; }
+  .bolinha { width:12px; height:12px; border-radius:50%; }
+  .legenda { display:flex; gap:16px; font-size:14px; color:var(--texto-suave); margin-top:8px; flex-wrap:wrap; }
+  .legenda i { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="marca">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5C9 7 6 10.2 6 14a6 6 0 0 0 12 0c0-3.8-3-7-6-11.5Z"/><path d="M9.5 14.5h1.5l1-2 1.5 4 1-2h1"/></svg>
+    GlicoFácil
+  </div>
+  <div class="saudacao" id="saudacao">Olá!</div>
+  <div class="subtitulo" id="subtitulo">Vamos cuidar da sua glicose hoje?</div>
+</header>
+
+<main>
+  <!-- Tela inicial -->
+  <section id="inicio" class="tela ativa">
+    <div class="cartao">
+      <div class="status"><span id="led" class="ponto"></span><span id="txtSensor">Biossensor não conectado: use o glicosímetro</span></div>
+    </div>
+    <div class="cartao">
+      <div class="rotulo">Último exame</div>
+      <div class="ultimo" id="ultimo"><span style="font-size:19px">Nenhum exame registrado ainda.</span></div>
+    </div>
+    <button class="btn primario" onclick="irPara('exame')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5C9 7 6 10.2 6 14a6 6 0 0 0 12 0c0-3.8-3-7-6-11.5Z"/></svg>
+      Fazer exame
+    </button>
+    <button class="btn secundario" onclick="mostrarHistorico()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg>
+      Ver meus exames
+    </button>
+  </section>
+
+  <!-- Tela do exame -->
+  <section id="exame" class="tela">
+    <div class="cartao">
+      <div class="rotulo">Como fazer</div>
+      <ol class="passos">
+        <li><span class="n">1</span>Encaixe o biossensor na entrada USB-C do celular.</li>
+        <li><span class="n">2</span>Coloque a fita e encoste a gota de sangue na ponta.</li>
+        <li><span class="n">3</span>Espere o aviso na tela.</li>
+      </ol>
+    </div>
+    <div class="cartao">
+      <label>Quando foi a última refeição?</label>
+      <div class="opcoes">
+        <button class="opcao sel" data-momento="jejum" onclick="escolher(this)"><span>🌅</span>Em jejum</button>
+        <button class="opcao" data-momento="pos" onclick="escolher(this)"><span>🍽️</span>Comi há 2 h</button>
+      </div>
+    </div>
+    <div class="cartao">
+      <label for="manual">Valor do glicosímetro (mg/dL)</label>
+      <input id="manual" type="number" inputmode="numeric" min="20" max="600" placeholder="Ex.: 110">
+    </div>
+    <button class="btn primario" onclick="lerSensor()">Ler resultado</button>
+    <button class="btn secundario" onclick="irPara('inicio')">Voltar</button>
+  </section>
+
+  <!-- Tela do resultado -->
+  <section id="resultado" class="tela">
+    <div class="cartao">
+      <div class="data" id="resData"></div>
+      <div class="medidor">
+        <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="#EEF1F5" stroke-width="12"/>
+          <circle id="arco" cx="60" cy="60" r="52" fill="none" stroke-width="12" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="327"/></svg>
+        <div class="centro"><div class="valor" id="resValor"></div><div class="unid">mg/dL</div></div>
+      </div>
+      <div class="faixa" id="resFaixa"></div>
+    </div>
+    <div class="cartao dica">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <div id="resDica"></div>
+    </div>
+    <button class="btn zap" onclick="avisarFamiliar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.5A8.4 8.4 0 1 1 21 11.5Z"/></svg>
+      Enviar para meu familiar
+    </button>
+    <button class="btn secundario" onclick="irPara('inicio')">Voltar ao início</button>
+    <p class="aviso">O GlicoFácil ajuda a acompanhar a glicemia. Ele não substitui a consulta médica.</p>
+  </section>
+
+  <!-- Tela do histórico -->
+  <section id="historico" class="tela">
+    <div class="cartao">
+      <div class="rotulo">Últimos 7 exames</div>
+      <svg id="grafico" viewBox="0 0 320 150" width="100%" height="150"></svg>
+      <div class="legenda"><span><i style="background:var(--verde)"></i>Normal</span><span><i style="background:var(--amarelo)"></i>Atenção</span><span><i style="background:var(--vermelho)"></i>Alta ou baixa</span></div>
+    </div>
+    <div class="cartao" id="lista"></div>
+    <button class="btn secundario" onclick="irPara('inicio')">Voltar</button>
+  </section>
+</main>
+
+<script>
+// Faixas de referência da Sociedade Brasileira de Diabetes (adultos)
+function classificar(valor, momento) {
+  if (valor < 70) return { faixa:'baixo', titulo:'Glicose baixa',
+    dica:'Coma ou beba algo com açúcar agora (meio copo de suco, por exemplo) e meça de novo em 15 minutos. Se não melhorar, procure atendimento.' };
+  if (momento === 'jejum') {
+    if (valor < 100) return { faixa:'normal', titulo:'Normal', dica:'Glicose de jejum dentro do esperado. Continue medindo nos dias combinados com seu médico.' };
+    if (valor < 126) return { faixa:'atencao', titulo:'Atenção', dica:'Valor acima do ideal para jejum. Anote e leve este histórico na próxima consulta.' };
+    return { faixa:'alto', titulo:'Glicose alta', dica:'Valor alto para jejum. Avise seu familiar e marque uma consulta na UBS ou com seu médico.' };
+  }
+  if (valor < 140) return { faixa:'normal', titulo:'Normal', dica:'Glicose depois da refeição dentro do esperado.' };
+  if (valor < 200) return { faixa:'atencao', titulo:'Atenção', dica:'Valor acima do ideal depois da refeição. Anote e leve este histórico na próxima consulta.' };
+  return { faixa:'alto', titulo:'Glicose alta', dica:'Valor alto. Avise seu familiar e procure seu médico.' };
+}
+
+const CORES = { normal:'#1E7B34', atencao:'#9A6700', alto:'#B42318', baixo:'#B42318' };
+const sensor = { conectado:false };
+let momentoAtual = 'jejum';
+
+// No aparelho real, a leitura chega pela porta USB-C (WebUSB / API nativa do Android).
+// No protótipo, o valor vem do campo digitado ou de uma leitura simulada.
+async function lerValorDoSensor() {
+  const manual = parseInt(document.getElementById('manual').value, 10);
+  if (!isNaN(manual)) return manual;
+  return 85 + Math.round(Math.random() * 60);
+}
+
+function carregar() { try { return JSON.parse(localStorage.getItem('exames') || '[]'); } catch (e) { return []; } }
+function salvar(lista) { try { localStorage.setItem('exames', JSON.stringify(lista)); } catch (e) {} }
+const dataBR = d => new Date(d).toLocaleDateString('pt-BR');
+const horaBR = d => new Date(d).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+
+function escolher(botao) {
+  document.querySelectorAll('.opcao').forEach(b => b.classList.remove('sel'));
+  botao.classList.add('sel');
+  momentoAtual = botao.dataset.momento;
+}
+
+function irPara(id) {
+  document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+  document.getElementById(id).classList.add('ativa');
+  if (id === 'inicio') atualizarInicio();
+  window.scrollTo(0, 0);
+}
+
+async function lerSensor() {
+  const valor = await lerValorDoSensor();
+  const c = classificar(valor, momentoAtual);
+  const exame = { valor, momento:momentoAtual, faixa:c.faixa, data:new Date().toISOString() };
+  const lista = carregar(); lista.push(exame); salvar(lista);
+  mostrarResultado(exame, c);
+}
+
+function mostrarResultado(exame, c) {
+  document.getElementById('resData').textContent = `${dataBR(exame.data)} às ${horaBR(exame.data)} · ${exame.momento === 'jejum' ? 'em jejum' : 'após refeição'}`;
+  document.getElementById('resValor').textContent = exame.valor;
+  const f = document.getElementById('resFaixa'); f.textContent = c.titulo; f.className = 'faixa ' + c.faixa;
+  document.getElementById('resDica').textContent = c.dica;
+  const arco = document.getElementById('arco');
+  arco.style.stroke = CORES[c.faixa];
+  arco.style.strokeDashoffset = 327 - 327 * Math.min(exame.valor, 250) / 250;
+  window.ultimoExame = { exame, c };
+  irPara('resultado');
+}
+
+function avisarFamiliar() {
+  const { exame, c } = window.ultimoExame;
+  const texto = `GlicoFácil: glicose ${exame.valor} mg/dL (${exame.momento === 'jejum' ? 'em jejum' : 'após refeição'}) - ${c.titulo}. ${dataBR(exame.data)} às ${horaBR(exame.data)}`;
+  window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+}
+
+function atualizarInicio() {
+  const h = new Date().getHours();
+  document.getElementById('saudacao').textContent = h < 12 ? 'Bom dia!' : h < 18 ? 'Boa tarde!' : 'Boa noite!';
+  document.getElementById('led').className = 'ponto' + (sensor.conectado ? ' on' : '');
+  document.getElementById('txtSensor').textContent = sensor.conectado ? 'Biossensor conectado' : 'Biossensor não conectado: use o glicosímetro';
+  const lista = carregar();
+  if (lista.length) {
+    const u = lista[lista.length - 1];
+    const c = classificar(u.valor, u.momento);
+    document.getElementById('ultimo').innerHTML =
+      `<div><div class="num">${u.valor}<small>mg/dL</small></div><div style="font-size:16px;color:var(--texto-suave);margin-top:6px">${dataBR(u.data)} · ${u.momento === 'jejum' ? 'em jejum' : 'após refeição'}</div></div>
+       <span class="selo ${c.faixa}">${c.titulo}</span>`;
+  }
+}
+
+function mostrarHistorico() {
+  const lista = carregar().slice(-7);
+  const svg = document.getElementById('grafico');
+  const max = 220, w = 320, h = 150, y = v => h - 10 - Math.min(v, max) / max * (h - 20);
+  let html = `<rect x="0" y="${y(125)}" width="${w}" height="${y(70) - y(125)}" fill="#E6F4EA" rx="6"/>`;
+  const passo = lista.length > 1 ? (w - 40) / (lista.length - 1) : 0;
+  const pts = lista.map((e, i) => [20 + i * passo, y(e.valor)]);
+  if (pts.length > 1) html += `<polyline fill="none" stroke="#1F497D" stroke-width="3" stroke-linejoin="round" points="${pts.map(p => p.join(',')).join(' ')}"/>`;
+  pts.forEach((p, i) => { html += `<circle cx="${p[0]}" cy="${p[1]}" r="7" fill="${CORES[lista[i].faixa]}" stroke="#fff" stroke-width="2.5"/>`; });
+  svg.innerHTML = html;
+  document.getElementById('lista').innerHTML = lista.slice().reverse().map(e =>
+    `<div class="linha"><div class="quando">${dataBR(e.data)}<small>${e.momento === 'jejum' ? 'Em jejum' : 'Após refeição'}</small></div>
+     <div class="v"><span class="bolinha" style="background:${CORES[e.faixa]}"></span>${e.valor}</div></div>`).join('') || 'Nenhum exame ainda.';
+  irPara('historico');
+}
+
+atualizarInicio();
+</script>
+</body>
+</html>
